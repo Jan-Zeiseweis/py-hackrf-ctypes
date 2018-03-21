@@ -5,7 +5,7 @@ I create this project because  I want a simple Python interface to my hackrf boa
 
 # Dependencies
 
-* libusb,NumPy
+* NumPy
 * Python 2.7.x/3.3+
 * [libhackrf](https://github.com/mossmann/hackrf/tree/master/host)
 
@@ -16,27 +16,25 @@ I create this project because  I want a simple Python interface to my hackrf boa
 ## Examples
 
 ```python
-import pylibhackrf ,ctypes
+#!/usr/bin/env python
 
-hackrf = pylibhackrf.HackRf()
+from time import sleep
+from pylibhackrf import HackRf
+from multiprocessing import Manager
 
-if hackrf.is_open == False:
-    hackrf.setup()
+hackrf = HackRf()
+
+if hackrf.setup():
     hackrf.set_freq(100 * 1000 * 1000)
     hackrf.set_sample_rate(8 * 1000 * 1000)
     hackrf.set_amp_enable(False)
     hackrf.set_lna_gain(16)
-    hackrf.set_vga_gain(20)    
-    hackrf.set_baseband_filter_bandwidth(1 * 1000 * 1000)  
-
-def callback_fun(hackrf_transfer):
-    array_type = (ctypes.c_byte*length)
-    values = ctypes.cast(hackrf_transfer.contents.buffer, ctypes.POINTER(array_type)).contents
-    #iq data here
-    iq = hackrf.packed_bytes_to_iq(values)    
-    return 0
-
-hackrf.start_rx_mode(callback_fun)
+    hackrf.set_vga_gain(20)
+    queue = Manager().Queue()
+    hackrf.start_rx_iq_to_queue(queue, 128)
+    sleep(.5)
+    hackrf.stop_rx_mode()
+    print(queue.get())
 ```
 
 # Todo
